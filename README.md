@@ -4,6 +4,14 @@ El notebook [01_Fusion_ACP_volumen_ambiente.ipynb](01_Fusion_ACP_volumen_ambient
 
 El resultado es un **índice descriptivo con una distancia simulada**. Los porcentajes de los bloques corresponden a una normalización L1 explícita de los coeficientes. No son ponderaciones de riesgo validadas ni sustituyen directamente el 80/20 del firmware.
 
+## Fundamento de la distancia y el volumen
+
+La sección 4.1 del notebook distingue el montaje del sensor, el nivel del agua y el volumen almacenado. El [manual de Vaisala RWS200 para el SR50A](https://docs.vaisala.com/r/M211608EN-AA/en-US/GUID-903A8C27-3DC8-45CB-92F9-AAF8B8783692?contentId=mRvlHRVufJ2WXQGl8XlDEw) indica al menos 50 cm sobre el nivel máximo esperado; esa especificación corresponde a ese equipo. El [HC-SR04 de SparkFun](https://www.sparkfun.com/ultrasonic-distance-sensor-hc-sr04.html) tiene un rango nominal diferente y necesita validación en el montaje utilizado.
+
+La [guía de medición de almacenamiento del State Water Resources Control Board](https://www.waterboards.ca.gov/waterrights/water_issues/programs/diversion_use/docs/res_measure6.pdf) describe la conversión de nivel a volumen mediante una curva de capacidad. La curva cota–volumen y la referencia vertical del Neusa no están incorporadas a este análisis: el intervalo 5–20 cm continúa siendo una simulación, no una distancia física reconstruida.
+
+La revisión metodológica distingue tres cuestiones: la justificación del montaje, la correspondencia nivel–volumen y la validación del evento de alarma. Cambiar el intervalo simulado a 5–15 cm no resuelve esas cuestiones ni modifica el z-score de la variable hídrica. El notebook incluye una comprobación explícita de esa equivalencia.
+
 ## Reproducción
 
 Con Python 3.11, desde esta carpeta:

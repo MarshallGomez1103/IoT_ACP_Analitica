@@ -13681,6 +13681,51 @@ Geometría NASA: {'type': 'Point', 'coordinates': [-73.967, 5.133, 2476.01]}
 </div>
 </div>
 </div>
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=5b432822"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="4.1.-Fundamento-f%C3%ADsico-de-distancia,-nivel-y-volumen">4.1. Fundamento físico de distancia, nivel y volumen<a class="anchor-link" href="#4.1.-Fundamento-f%C3%ADsico-de-distancia,-nivel-y-volumen">¶</a></h2><h3 id="Referencia-de-instalaci%C3%B3n">Referencia de instalación<a class="anchor-link" href="#Referencia-de-instalaci%C3%B3n">¶</a></h3><p>El manual de Vaisala RWS200 utiliza el SR50A para medir nivel de agua o nieve e indica montarlo al menos <strong>50 cm sobre el nivel máximo esperado</strong>, perpendicular a la superficie y con el haz despejado [7]. Es una instrucción específica de ese equipo, no una altura universal ni una referencia para calibrar el HC-SR04.</p>
+<p>SparkFun publica un rango nominal de <strong>2–400 cm</strong> para el HC-SR04 [8]. Un intervalo situado dentro de ese rango aún necesita verificación en el montaje real. Ninguna de estas referencias proporciona una equivalencia entre el volumen del Neusa y los centímetros del prototipo.</p>
+<h3 id="Medici%C3%B3n-del-almacenamiento">Medición del almacenamiento<a class="anchor-link" href="#Medici%C3%B3n-del-almacenamiento">¶</a></h3><p>La guía del State Water Resources Control Board describe la medición del nivel respecto de una referencia fija y su conversión a volumen mediante una curva de capacidad [9]. Para una instalación vertical, con cotas y unidades compatibles:</p>
+<p><code>cota_agua = cota_sensor − distancia_sensor_superficie</code></p>
+<p><code>volumen = C(cota_agua)</code></p>
+<p>Si se dispone de una curva invertible válida para el embalse y el tipo de volumen publicado, se puede reconstruir:</p>
+<p><code>distancia_sensor_superficie = cota_sensor − C⁻¹(volumen)</code>.</p>
+<p>El porcentaje de almacenamiento requiere además identificar qué capacidad y tipo de volumen se comparan. En el boletín CAR del 1 de agosto de 2024, <code>100 × 80,421 / 102,3 ≈ 78,61 %</code>, consistente con el porcentaje publicado. Esta razón numérica no identifica por sí sola el instrumento ni la curva empleados por CAR.</p>
+<h3 id="Evidencia-disponible-y-pendiente">Evidencia disponible y pendiente<a class="anchor-link" href="#Evidencia-disponible-y-pendiente">¶</a></h3><table>
+<thead>
+<tr>
+<th>Elemento</th>
+<th>Estado en este estudio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Volumen y almacenamiento publicados</td>
+<td>Disponibles en los boletines CAR.</td>
+</tr>
+<tr>
+<td>Curva cota–volumen vigente del Neusa y referencia vertical</td>
+<td>No incorporadas al conjunto analizado.</td>
+</tr>
+<tr>
+<td>Posición y cota de un sensor real en el Neusa</td>
+<td>No disponibles en las fuentes del análisis.</td>
+</tr>
+<tr>
+<td>Geometría y calibración del recipiente del prototipo</td>
+<td>No verificadas en este estudio.</td>
+</tr>
+<tr>
+<td>Distancia de 5–20 cm</td>
+<td>Escenario lineal simulado; no distancia reconstruida físicamente.</td>
+</tr>
+</tbody>
+</table>
+<p>Por ello, conservamos el ACP como análisis descriptivo del escenario declarado. Una referencia de instalación fundamenta el montaje, pero no sustituye la curva del embalse ni valida ponderaciones de alarma. Los intervalos 5–15 cm y 5–20 cm son transformaciones afines del mismo volumen; su estandarización produce el mismo z-score, como se comprueba en la sección 10.</p>
+</div>
+</div>
+</div>
 <div class="cell border-box-sizing text_cell rendered" id="cell-id=ffda118f"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
@@ -14672,7 +14717,10 @@ A = +0.111259·z(radiacion_MJ_m2_dia) -0.301152·z(temperatura_media_C) -0.29330
 <div class="prompt input_prompt">In [11]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">distancia_alternativa</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">+</span> <span class="mi">90</span><span class="o">*</span><span class="p">(</span><span class="n">V_max</span><span class="o">-</span><span class="n">datos</span><span class="o">.</span><span class="n">volumen_Mm3</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">V_max</span><span class="o">-</span><span class="n">V_min</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">distancia_5_15</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">+</span> <span class="mi">10</span><span class="o">*</span><span class="p">(</span><span class="n">V_max</span><span class="o">-</span><span class="n">datos</span><span class="o">.</span><span class="n">volumen_Mm3</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">V_max</span><span class="o">-</span><span class="n">V_min</span><span class="p">)</span>
+<span class="n">z_5_15</span> <span class="o">=</span> <span class="p">(</span><span class="n">distancia_5_15</span><span class="o">-</span><span class="n">distancia_5_15</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">/</span><span class="n">distancia_5_15</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">z_5_15</span><span class="p">,</span> <span class="n">Z</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
+<span class="n">distancia_alternativa</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">+</span> <span class="mi">90</span><span class="o">*</span><span class="p">(</span><span class="n">V_max</span><span class="o">-</span><span class="n">datos</span><span class="o">.</span><span class="n">volumen_Mm3</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">V_max</span><span class="o">-</span><span class="n">V_min</span><span class="p">)</span>
 <span class="n">z_alternativa</span> <span class="o">=</span> <span class="p">(</span><span class="n">distancia_alternativa</span><span class="o">-</span><span class="n">distancia_alternativa</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">/</span><span class="n">distancia_alternativa</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">z_alternativa</span><span class="p">,</span> <span class="n">Z</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
 <span class="c1"># También una escala 0–100 del descenso produce el mismo eje estandarizado.</span>
@@ -14880,6 +14928,9 @@ A = +0.111259·z(radiacion_MJ_m2_dia) -0.301152·z(temperatura_media_C) -0.29330
 <p>[4] Scikit-learn, “PCA”. <a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html">https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html</a>.</p>
 <p>[5] Universidad de La Sabana, <em>Enunciado_Chx_2_IoT_262.pdf</em>, Internet de las Cosas, 2026-2, apartados 1–3; <em>Rubricas_Entrega-CHx_IoT_20262 del 2do corte.xlsx</em>, indicadores E5, E7, E9, E11, E13 y E15. Estas fuentes delimitan los requisitos académicos, no proporcionan ponderaciones hidrológicas.</p>
 <p>[6] DigiCert, certificados intermedios de las cadenas utilizadas por CAR: <a href="https://cacerts.digicert.com/GeoTrustEVRSACAG2.crt">GeoTrust EV RSA CA G2</a> y <a href="https://cacerts.digicert.com/ThawteEVRSACAG2.crt">Thawte EV RSA CA G2</a>. Se incluyen exclusivamente para la opción de descarga con validación TLS, sin modificar certificados del sistema.</p>
+<p>[7] Vaisala, <em>RWS200 Installation Manual</em>, “Installing SR50A”, revisión AA. <a href="https://docs.vaisala.com/r/M211608EN-AA/en-US/GUID-903A8C27-3DC8-45CB-92F9-AAF8B8783692?contentId=mRvlHRVufJ2WXQGl8XlDEw">https://docs.vaisala.com/r/M211608EN-AA/en-US/GUID-903A8C27-3DC8-45CB-92F9-AAF8B8783692?contentId=mRvlHRVufJ2WXQGl8XlDEw</a>.</p>
+<p>[8] SparkFun Electronics, “Ultrasonic Distance Sensor – 5V (HC-SR04)”, SEN-15569, especificaciones. <a href="https://www.sparkfun.com/ultrasonic-distance-sensor-hc-sr04.html">https://www.sparkfun.com/ultrasonic-distance-sensor-hc-sr04.html</a>.</p>
+<p>[9] State Water Resources Control Board, <em>Reservoir Storage Measurement &amp; Recordkeeping Guide for Above-Ground Reservoirs</em>, versión 03/01/2020, pp. 3, 5 y 7. <a href="https://www.waterboards.ca.gov/waterrights/water_issues/programs/diversion_use/docs/res_measure6.pdf">https://www.waterboards.ca.gov/waterrights/water_issues/programs/diversion_use/docs/res_measure6.pdf</a>.</p>
 </div>
 </div>
 </div>
