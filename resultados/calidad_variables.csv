@@ -1,0 +1,6 @@
+,observaciones,faltantes,minimo,maximo,extremos_IQR,limite_IQR_inferior,limite_IQR_superior
+distancia_simulada_cm,31,0,5.0,20.0,0,-2.324584199584084,26.33445945945938
+radiacion_MJ_m2_dia,31,0,12.38,24.27,0,7.204999999999998,26.765
+temperatura_media_C,31,0,12.61,14.84,0,11.362499999999997,15.7425
+humedad_relativa_pct,31,0,77.49,88.43,2,79.86500000000002,91.02499999999999
+presion_hPa,31,0,758.6,761.1,0,758.3249999999997,761.7250000000003

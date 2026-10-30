@@ -13586,6 +13586,7 @@ Geometría NASA: {'type': 'Point', 'coordinates': [-73.967, 5.133, 2476.01]}
 <span class="n">campos</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"embalse"</span><span class="p">,</span> <span class="s2">"capacidad_util_Mm3"</span><span class="p">,</span> <span class="s2">"volumen_Mm3"</span><span class="p">,</span> <span class="s2">"almacenamiento_pct"</span><span class="p">,</span>
           <span class="s2">"descarga_m3_s"</span><span class="p">,</span> <span class="s2">"capacidad_regulacion_Mm3"</span><span class="p">,</span> <span class="s2">"tendencia_publicada"</span><span class="p">]</span>
 <span class="n">registros</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">controles_redondeo</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">fuente</span> <span class="ow">in</span> <span class="n">originales</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">fuente</span><span class="p">[</span><span class="s2">"entidad"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"CAR"</span><span class="p">:</span>
         <span class="k">continue</span>
@@ -13598,6 +13599,23 @@ Geometría NASA: {'type': 'Point', 'coordinates': [-73.967, 5.133, 2476.01]}
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">coincidencias</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">"No se recuperaron los cuatro embalses."</span>
     <span class="k">for</span> <span class="n">coincidencia</span> <span class="ow">in</span> <span class="n">coincidencias</span><span class="p">:</span>
         <span class="n">fila</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">campos</span><span class="p">,</span> <span class="n">coincidencia</span><span class="o">.</span><span class="n">groups</span><span class="p">()))</span>
+        <span class="n">incertidumbre</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">columna</span> <span class="ow">in</span> <span class="n">campos</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">]:</span>
+            <span class="n">publicado</span> <span class="o">=</span> <span class="n">fila</span><span class="p">[</span><span class="n">columna</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">"."</span><span class="p">)</span>
+            <span class="n">decimales</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">publicado</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="s2">"."</span> <span class="ow">in</span> <span class="n">publicado</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="n">incertidumbre</span><span class="p">[</span><span class="n">columna</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="n">decimales</span><span class="p">)</span>
+        <span class="n">cap</span><span class="p">,</span> <span class="n">vol</span><span class="p">,</span> <span class="n">pct</span><span class="p">,</span> <span class="n">descarga</span><span class="p">,</span> <span class="n">regulacion</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">"."</span><span class="p">))</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">campos</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">]]</span>
+        <span class="n">e_cap</span> <span class="o">=</span> <span class="n">incertidumbre</span><span class="p">[</span><span class="s2">"capacidad_util_Mm3"</span><span class="p">]</span>
+        <span class="n">e_vol</span> <span class="o">=</span> <span class="n">incertidumbre</span><span class="p">[</span><span class="s2">"volumen_Mm3"</span><span class="p">]</span>
+        <span class="n">e_pct</span> <span class="o">=</span> <span class="n">incertidumbre</span><span class="p">[</span><span class="s2">"almacenamiento_pct"</span><span class="p">]</span>
+        <span class="n">pct_inferior</span> <span class="o">=</span> <span class="mi">100</span><span class="o">*</span><span class="p">(</span><span class="n">vol</span><span class="o">-</span><span class="n">e_vol</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">cap</span><span class="o">+</span><span class="n">e_cap</span><span class="p">)</span>
+        <span class="n">pct_superior</span> <span class="o">=</span> <span class="mi">100</span><span class="o">*</span><span class="p">(</span><span class="n">vol</span><span class="o">+</span><span class="n">e_vol</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">cap</span><span class="o">-</span><span class="n">e_cap</span><span class="p">)</span>
+        <span class="n">controles_redondeo</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"fecha"</span><span class="p">:</span><span class="n">fuente</span><span class="p">[</span><span class="s2">"fecha"</span><span class="p">],</span><span class="s2">"embalse"</span><span class="p">:</span><span class="n">fila</span><span class="p">[</span><span class="s2">"embalse"</span><span class="p">],</span>
+            <span class="s2">"porcentaje_publicado"</span><span class="p">:</span><span class="n">pct</span><span class="p">,</span><span class="s2">"porcentaje_solo_para_control"</span><span class="p">:</span><span class="mi">100</span><span class="o">*</span><span class="n">vol</span><span class="o">/</span><span class="n">cap</span><span class="p">,</span>
+            <span class="s2">"diferencia_puntos_porcentuales"</span><span class="p">:</span><span class="n">pct</span><span class="o">-</span><span class="mi">100</span><span class="o">*</span><span class="n">vol</span><span class="o">/</span><span class="n">cap</span><span class="p">,</span>
+            <span class="s2">"limite_porcentaje_inferior"</span><span class="p">:</span><span class="n">pct_inferior</span><span class="p">,</span><span class="s2">"limite_porcentaje_superior"</span><span class="p">:</span><span class="n">pct_superior</span><span class="p">,</span>
+            <span class="s2">"compatible_porcentaje"</span><span class="p">:</span><span class="n">pct</span><span class="o">+</span><span class="n">e_pct</span> <span class="o">&gt;=</span> <span class="n">pct_inferior</span> <span class="ow">and</span> <span class="n">pct</span><span class="o">-</span><span class="n">e_pct</span> <span class="o">&lt;=</span> <span class="n">pct_superior</span><span class="p">,</span>
+            <span class="s2">"compatible_regulacion"</span><span class="p">:</span><span class="nb">abs</span><span class="p">(</span><span class="n">cap</span><span class="o">-</span><span class="n">vol</span><span class="o">-</span><span class="n">regulacion</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">e_cap</span><span class="o">+</span><span class="n">e_vol</span><span class="o">+</span><span class="n">incertidumbre</span><span class="p">[</span><span class="s2">"capacidad_regulacion_Mm3"</span><span class="p">]</span><span class="o">+</span><span class="mf">1e-12</span><span class="p">})</span>
         <span class="k">for</span> <span class="n">columna</span> <span class="ow">in</span> <span class="n">campos</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">]:</span>
             <span class="n">fila</span><span class="p">[</span><span class="n">columna</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="n">columna</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">"."</span><span class="p">))</span>
         <span class="n">fila</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fecha</span><span class="o">=</span><span class="n">fuente</span><span class="p">[</span><span class="s2">"fecha"</span><span class="p">],</span> <span class="n">fuente_url</span><span class="o">=</span><span class="n">fuente</span><span class="p">[</span><span class="s2">"url"</span><span class="p">])</span>
@@ -13612,6 +13630,11 @@ Geometría NASA: {'type': 'Point', 'coordinates': [-73.967, 5.133, 2476.01]}
                                    <span class="n">volumen_min_Mm3</span><span class="o">=</span><span class="p">(</span><span class="s2">"volumen_Mm3"</span><span class="p">,</span> <span class="s2">"min"</span><span class="p">),</span>
                                    <span class="n">volumen_max_Mm3</span><span class="o">=</span><span class="p">(</span><span class="s2">"volumen_Mm3"</span><span class="p">,</span> <span class="s2">"max"</span><span class="p">)))</span>
 <span class="n">car</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">RESULTADOS</span> <span class="o">/</span> <span class="s2">"car_reconstruido.csv"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">control_redondeo</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">controles_redondeo</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s2">"fecha"</span><span class="p">,</span><span class="s2">"embalse"</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">control_redondeo</span><span class="o">.</span><span class="n">compatible_porcentaje</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">control_redondeo</span><span class="o">.</span><span class="n">compatible_regulacion</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="n">control_redondeo</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">RESULTADOS</span> <span class="o">/</span> <span class="s2">"control_redondeo_CAR.csv"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Filas CAR compatibles con su precisión publicada:"</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">control_redondeo</span><span class="o">.</span><span class="n">compatible_porcentaje</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
 </pre></div>
 </div>
 </div>
@@ -13678,6 +13701,13 @@ Geometría NASA: {'type': 'Point', 'coordinates': [-73.967, 5.133, 2476.01]}
 </table>
 </div></div>
 </div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Filas CAR compatibles con su precisión publicada: 124
+</pre>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -13692,6 +13722,7 @@ Geometría NASA: {'type': 'Point', 'coordinates': [-73.967, 5.133, 2476.01]}
 <p>Si se dispone de una curva invertible válida para el embalse y el tipo de volumen publicado, se puede reconstruir:</p>
 <p><code>distancia_sensor_superficie = cota_sensor − C⁻¹(volumen)</code>.</p>
 <p>El porcentaje de almacenamiento requiere además identificar qué capacidad y tipo de volumen se comparan. En el boletín CAR del 1 de agosto de 2024, <code>100 × 80,421 / 102,3 ≈ 78,61 %</code>, consistente con el porcentaje publicado. Esta razón numérica no identifica por sí sola el instrumento ni la curva empleados por CAR.</p>
+<h3 id="Referencia-operativa-colombiana">Referencia operativa colombiana<a class="anchor-link" href="#Referencia-operativa-colombiana">¶</a></h3><p>El estudio de la Universidad de los Andes para el Consejo Nacional de Operación documenta tablas nivel–volumen obtenidas mediante batimetría y su uso junto con registros de nivel. Describe, por ejemplo, tablas batimétricas en EPM y curvas cota–volumen con vigencia de la batimetría en ISAGEN [10]. Esa referencia explica un procedimiento real; no demuestra qué equipo o curva utilizó CAR en los boletines concretos del Neusa.</p>
 <h3 id="Evidencia-disponible-y-pendiente">Evidencia disponible y pendiente<a class="anchor-link" href="#Evidencia-disponible-y-pendiente">¶</a></h3><table>
 <thead>
 <tr>
@@ -13840,6 +13871,274 @@ Geometría NASA: {'type': 'Point', 'coordinates': [-73.967, 5.133, 2476.01]}
 </div>
 </div>
 </div>
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=efe0be2d"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="5.1.-Control-de-calidad-y-tratamiento-aplicado">5.1. Control de calidad y tratamiento aplicado<a class="anchor-link" href="#5.1.-Control-de-calidad-y-tratamiento-aplicado">¶</a></h2><p>Antes de ajustar el ACP verificamos calendario, claves únicas, valores ausentes, finitud y rangos físicos básicos. La reconstrucción desde originales y el manifiesto comprueban la transcripción y la integridad, pero no sustituyen la validación de los instrumentos de origen.</p>
+<p>Los porcentajes CAR se conservan tal como aparecen publicados. La capacidad, el volumen y el porcentaje tienen precisiones distintas; por eso comprobamos compatibilidad mediante intervalos de redondeo en lugar de imponer igualdad exacta. Un pequeño residuo numérico no basta para afirmar que hay un error.</p>
+<p>Aplicamos la regla exploratoria de 1,5 veces el rango intercuartílico (IQR) para señalar observaciones extremas. <strong>Una bandera IQR no implica un dato incorrecto</strong>: los valores originales físicamente admisibles se conservan. No se realiza imputación, interpolación, winsorización ni eliminación de extremos. Las únicas conversiones de los originales son los tipos numéricos, la fecha y la columna adicional de presión en hPa.</p>
+<p>La muestra se limita a las fechas con volumen y clima disponibles para el mismo embalse. Los días NASA fuera de agosto no se completan con volúmenes inventados; los otros embalses tampoco reciben por copia el clima del Neusa.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=48b45c72">
+<div class="input">
+<div class="prompt input_prompt">In [7]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">assert</span> <span class="n">nasa</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">is_unique</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">nasa</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">nasa</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">nasa</span><span class="o">.</span><span class="n">humedad_relativa_pct</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">assert</span> <span class="p">(</span><span class="n">nasa</span><span class="o">.</span><span class="n">presion_hPa</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">assert</span> <span class="p">(</span><span class="n">nasa</span><span class="p">[[</span><span class="s2">"radiacion_MJ_m2_dia"</span><span class="p">,</span><span class="s2">"precipitacion_mm_dia"</span><span class="p">,</span><span class="s2">"viento_2m_m_s"</span><span class="p">]]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">assert</span> <span class="p">(</span><span class="n">nasa</span><span class="o">.</span><span class="n">temperatura_min_C</span> <span class="o">&lt;=</span> <span class="n">nasa</span><span class="o">.</span><span class="n">temperatura_media_C</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">assert</span> <span class="p">(</span><span class="n">nasa</span><span class="o">.</span><span class="n">temperatura_media_C</span> <span class="o">&lt;=</span> <span class="n">nasa</span><span class="o">.</span><span class="n">temperatura_max_C</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">assert</span> <span class="ow">not</span> <span class="n">car</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+<span class="k">assert</span> <span class="p">(</span><span class="n">car</span><span class="p">[</span><span class="n">campos</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">]]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">assert</span> <span class="p">(</span><span class="n">car</span><span class="o">.</span><span class="n">capacidad_util_Mm3</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="n">variables</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"distancia_simulada_cm"</span><span class="p">,</span> <span class="s2">"radiacion_MJ_m2_dia"</span><span class="p">,</span> <span class="s2">"temperatura_media_C"</span><span class="p">,</span>
+             <span class="s2">"humedad_relativa_pct"</span><span class="p">,</span> <span class="s2">"presion_hPa"</span><span class="p">]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">datos</span><span class="p">[</span><span class="n">variables</span><span class="p">]</span>
+<span class="k">assert</span> <span class="n">datos</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">is_unique</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">datos</span><span class="p">)</span><span class="o">==</span><span class="mi">31</span>
+<span class="k">assert</span> <span class="n">datos</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s2">"2024-08-01"</span><span class="p">,</span><span class="s2">"2024-08-31"</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="s2">"fecha"</span><span class="p">))</span>
+<span class="k">assert</span> <span class="ow">not</span> <span class="n">X</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">assert</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="n">q1</span><span class="p">,</span> <span class="n">q3</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="mf">0.25</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="mf">0.75</span><span class="p">)</span>
+<span class="n">iqr</span> <span class="o">=</span> <span class="n">q3</span><span class="o">-</span><span class="n">q1</span>
+<span class="n">inferior</span><span class="p">,</span> <span class="n">superior</span> <span class="o">=</span> <span class="n">q1</span><span class="o">-</span><span class="mf">1.5</span><span class="o">*</span><span class="n">iqr</span><span class="p">,</span> <span class="n">q3</span><span class="o">+</span><span class="mf">1.5</span><span class="o">*</span><span class="n">iqr</span>
+<span class="n">banderas</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">lt</span><span class="p">(</span><span class="n">inferior</span><span class="p">)</span> <span class="o">|</span> <span class="n">X</span><span class="o">.</span><span class="n">gt</span><span class="p">(</span><span class="n">superior</span><span class="p">)</span>
+<span class="n">calidad_variables</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">"observaciones"</span><span class="p">:</span><span class="n">X</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span><span class="s2">"faltantes"</span><span class="p">:</span><span class="n">X</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
+    <span class="s2">"minimo"</span><span class="p">:</span><span class="n">X</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span><span class="s2">"maximo"</span><span class="p">:</span><span class="n">X</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span><span class="s2">"extremos_IQR"</span><span class="p">:</span><span class="n">banderas</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
+    <span class="s2">"limite_IQR_inferior"</span><span class="p">:</span><span class="n">inferior</span><span class="p">,</span><span class="s2">"limite_IQR_superior"</span><span class="p">:</span><span class="n">superior</span><span class="p">})</span>
+<span class="n">alertas</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">fecha</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">banderas</span><span class="p">[</span><span class="n">variable</span><span class="p">]]:</span>
+        <span class="n">alertas</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"fecha"</span><span class="p">:</span><span class="n">fecha</span><span class="p">,</span><span class="s2">"variable"</span><span class="p">:</span><span class="n">variable</span><span class="p">,</span><span class="s2">"valor"</span><span class="p">:</span><span class="n">X</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">fecha</span><span class="p">,</span><span class="n">variable</span><span class="p">],</span>
+                        <span class="s2">"tratamiento"</span><span class="p">:</span><span class="s2">"conservado: original sin error demostrado"</span><span class="p">})</span>
+<span class="n">alertas</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">alertas</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">"fecha"</span><span class="p">,</span><span class="s2">"variable"</span><span class="p">,</span><span class="s2">"valor"</span><span class="p">,</span><span class="s2">"tratamiento"</span><span class="p">])</span>
+<span class="n">trazabilidad</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
+    <span class="p">{</span><span class="s2">"etapa"</span><span class="p">:</span><span class="s2">"NASA original"</span><span class="p">,</span><span class="s2">"filas"</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">nasa</span><span class="p">),</span><span class="s2">"criterio"</span><span class="p">:</span><span class="s2">"serie completa 2023–2025"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"etapa"</span><span class="p">:</span><span class="s2">"CAR original"</span><span class="p">,</span><span class="s2">"filas"</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">car</span><span class="p">),</span><span class="s2">"criterio"</span><span class="p">:</span><span class="s2">"31 fechas y cuatro embalses"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"etapa"</span><span class="p">:</span><span class="s2">"CAR Neusa"</span><span class="p">,</span><span class="s2">"filas"</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">neusa</span><span class="p">),</span><span class="s2">"criterio"</span><span class="p">:</span><span class="s2">"mismo embalse del punto NASA"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"etapa"</span><span class="p">:</span><span class="s2">"Unión por fecha"</span><span class="p">,</span><span class="s2">"filas"</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">datos</span><span class="p">),</span><span class="s2">"criterio"</span><span class="p">:</span><span class="s2">"sin imputar volumen para otras fechas"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"etapa"</span><span class="p">:</span><span class="s2">"Matriz final ACP"</span><span class="p">,</span><span class="s2">"filas"</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">),</span><span class="s2">"criterio"</span><span class="p">:</span><span class="s2">"todas las 31 fechas, sin eliminar extremos"</span><span class="p">},</span>
+<span class="p">])</span>
+<span class="n">calidad_variables</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">RESULTADOS</span> <span class="o">/</span> <span class="s2">"calidad_variables.csv"</span><span class="p">)</span>
+<span class="n">alertas</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">RESULTADOS</span> <span class="o">/</span> <span class="s2">"observaciones_IQR.csv"</span><span class="p">,</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">trazabilidad</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">RESULTADOS</span> <span class="o">/</span> <span class="s2">"trazabilidad_muestra.csv"</span><span class="p">,</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">trazabilidad</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">calidad_variables</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">alertas</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Duplicados NASA:"</span><span class="p">,</span><span class="nb">int</span><span class="p">(</span><span class="n">nasa</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span><span class="s2">"| duplicados CAR:"</span><span class="p">,</span><span class="nb">int</span><span class="p">(</span><span class="n">car</span><span class="o">.</span><span class="n">duplicated</span><span class="p">([</span><span class="s2">"fecha"</span><span class="p">,</span><span class="s2">"embalse"</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Valores imputados: 0 | observaciones eliminadas por IQR: 0"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Mayor diferencia CAR de porcentaje (puntos):"</span><span class="p">,</span><span class="nb">float</span><span class="p">(</span><span class="n">control_redondeo</span><span class="o">.</span><span class="n">diferencia_puntos_porcentuales</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_html rendered_html output_subarea"><div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>etapa</th>
+<th>filas</th>
+<th>criterio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>NASA original</td>
+<td>1096</td>
+<td>serie completa 2023–2025</td>
+</tr>
+<tr>
+<th>1</th>
+<td>CAR original</td>
+<td>124</td>
+<td>31 fechas y cuatro embalses</td>
+</tr>
+<tr>
+<th>2</th>
+<td>CAR Neusa</td>
+<td>31</td>
+<td>mismo embalse del punto NASA</td>
+</tr>
+<tr>
+<th>3</th>
+<td>Unión por fecha</td>
+<td>31</td>
+<td>sin imputar volumen para otras fechas</td>
+</tr>
+<tr>
+<th>4</th>
+<td>Matriz final ACP</td>
+<td>31</td>
+<td>todas las 31 fechas, sin eliminar extremos</td>
+</tr>
+</tbody>
+</table>
+</div></div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_html rendered_html output_subarea"><div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>observaciones</th>
+<th>faltantes</th>
+<th>minimo</th>
+<th>maximo</th>
+<th>extremos_IQR</th>
+<th>limite_IQR_inferior</th>
+<th>limite_IQR_superior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>distancia_simulada_cm</th>
+<td>31</td>
+<td>0</td>
+<td>5.00</td>
+<td>20.00</td>
+<td>0</td>
+<td>-2.324584</td>
+<td>26.334459</td>
+</tr>
+<tr>
+<th>radiacion_MJ_m2_dia</th>
+<td>31</td>
+<td>0</td>
+<td>12.38</td>
+<td>24.27</td>
+<td>0</td>
+<td>7.205000</td>
+<td>26.765000</td>
+</tr>
+<tr>
+<th>temperatura_media_C</th>
+<td>31</td>
+<td>0</td>
+<td>12.61</td>
+<td>14.84</td>
+<td>0</td>
+<td>11.362500</td>
+<td>15.742500</td>
+</tr>
+<tr>
+<th>humedad_relativa_pct</th>
+<td>31</td>
+<td>0</td>
+<td>77.49</td>
+<td>88.43</td>
+<td>2</td>
+<td>79.865000</td>
+<td>91.025000</td>
+</tr>
+<tr>
+<th>presion_hPa</th>
+<td>31</td>
+<td>0</td>
+<td>758.60</td>
+<td>761.10</td>
+<td>0</td>
+<td>758.325000</td>
+<td>761.725000</td>
+</tr>
+</tbody>
+</table>
+</div></div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_html rendered_html output_subarea"><div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>fecha</th>
+<th>variable</th>
+<th>valor</th>
+<th>tratamiento</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>2024-08-30</td>
+<td>humedad_relativa_pct</td>
+<td>77.49</td>
+<td>conservado: original sin error demostrado</td>
+</tr>
+<tr>
+<th>1</th>
+<td>2024-08-31</td>
+<td>humedad_relativa_pct</td>
+<td>79.83</td>
+<td>conservado: original sin error demostrado</td>
+</tr>
+</tbody>
+</table>
+</div></div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Duplicados NASA: 0 | duplicados CAR: 0
+Valores imputados: 0 | observaciones eliminadas por IQR: 0
+Mayor diferencia CAR de porcentaje (puntos): 0.020954495005554463
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div class="cell border-box-sizing text_cell rendered" id="cell-id=7b73af25"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
@@ -13851,15 +14150,10 @@ Geometría NASA: {'type': 'Point', 'coordinates': [-73.967, 5.133, 2476.01]}
 </div>
 <div class="cell border-box-sizing code_cell rendered" id="cell-id=9e90ce30">
 <div class="input">
-<div class="prompt input_prompt">In [7]:</div>
+<div class="prompt input_prompt">In [8]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">variables</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"distancia_simulada_cm"</span><span class="p">,</span> <span class="s2">"radiacion_MJ_m2_dia"</span><span class="p">,</span> <span class="s2">"temperatura_media_C"</span><span class="p">,</span>
-             <span class="s2">"humedad_relativa_pct"</span><span class="p">,</span> <span class="s2">"presion_hPa"</span><span class="p">]</span>
-<span class="n">X</span> <span class="o">=</span> <span class="n">datos</span><span class="p">[</span><span class="n">variables</span><span class="p">]</span>
-<span class="k">assert</span> <span class="ow">not</span> <span class="n">X</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-<span class="k">assert</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-<span class="n">display</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">display</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 <span class="n">correlaciones</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span>
 <span class="n">display</span><span class="p">(</span><span class="n">correlaciones</span><span class="p">)</span>
 <span class="n">escalador</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span>
@@ -14111,7 +14405,7 @@ Geometría NASA: {'type': 'Point', 'coordinates': [-73.967, 5.133, 2476.01]}
 </div>
 <div class="cell border-box-sizing code_cell rendered" id="cell-id=0b83be65">
 <div class="input">
-<div class="prompt input_prompt">In [8]:</div>
+<div class="prompt input_prompt">In [9]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">svd_solver</span><span class="o">=</span><span class="s2">"full"</span><span class="p">)</span>
@@ -14389,7 +14683,7 @@ Geometría NASA: {'type': 'Point', 'coordinates': [-73.967, 5.133, 2476.01]}
 </div>
 <div class="cell border-box-sizing code_cell rendered" id="cell-id=8a6387a2">
 <div class="input">
-<div class="prompt input_prompt">In [9]:</div>
+<div class="prompt input_prompt">In [10]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">coeficientes</span><span class="o">.</span><span class="n">PC1</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
@@ -14576,7 +14870,7 @@ A = +0.111259·z(radiacion_MJ_m2_dia) -0.301152·z(temperatura_media_C) -0.29330
 </div>
 <div class="cell border-box-sizing code_cell rendered" id="cell-id=c1a42d84">
 <div class="input">
-<div class="prompt input_prompt">In [10]:</div>
+<div class="prompt input_prompt">In [11]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">S_min</span><span class="p">,</span> <span class="n">S_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
@@ -14709,15 +15003,20 @@ A = +0.111259·z(radiacion_MJ_m2_dia) -0.301152·z(temperatura_media_C) -0.29330
 <h2 id="10.-Sensibilidad:-qu%C3%A9-depende-de-los-supuestos-y-de-la-muestra">10. Sensibilidad: qué depende de los supuestos y de la muestra<a class="anchor-link" href="#10.-Sensibilidad:-qu%C3%A9-depende-de-los-supuestos-y-de-la-muestra">¶</a></h2><p>Cambiar 5–20 cm por otro intervalo lineal creciente de distancia <strong>no cambia su z-score</strong>, porque la estandarización elimina origen y escala. Tampoco agrega información: la distancia sigue siendo una transformación exacta e inversa del volumen.</p>
 <p>Por tanto, escoger centímetros distintos no permite aumentar legítimamente su peso en un ACP estandarizado. Para priorizar nivel por política de ingeniería se necesita declarar una decisión separada, o evaluar una función de alarma con un objetivo y evidencia independientes.</p>
 <p>Comparamos el mes completo con dos quincenas, manteniendo las cinco variables y el supuesto de escala. Cada ajuste usa medias y desviaciones de su propio subconjunto. La comparación describe sensibilidad temporal, no es un intervalo de confianza ni una prueba de falsas alarmas.</p>
+<p>También verificamos la igualdad con el volumen invertido y estandarizado. La distancia simulada no añade información hídrica: el resultado del ACP puede obtenerse directamente del volumen con orientación inversa. Los centímetros elegidos no hacen que el modelo aprenda más sobre el sensor.</p>
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered" id="cell-id=019fae19">
 <div class="input">
-<div class="prompt input_prompt">In [11]:</div>
+<div class="prompt input_prompt">In [12]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">distancia_5_15</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">+</span> <span class="mi">10</span><span class="o">*</span><span class="p">(</span><span class="n">V_max</span><span class="o">-</span><span class="n">datos</span><span class="o">.</span><span class="n">volumen_Mm3</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">V_max</span><span class="o">-</span><span class="n">V_min</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># El volumen invertido contiene la misma información estandarizada que la distancia simulada.</span>
+<span class="n">volumen_invertido</span> <span class="o">=</span> <span class="o">-</span><span class="n">datos</span><span class="o">.</span><span class="n">volumen_Mm3</span>
+<span class="n">z_volumen_invertido</span> <span class="o">=</span> <span class="p">(</span><span class="n">volumen_invertido</span><span class="o">-</span><span class="n">volumen_invertido</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">/</span><span class="n">volumen_invertido</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">z_volumen_invertido</span><span class="p">,</span> <span class="n">Z</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
+<span class="n">distancia_5_15</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">+</span> <span class="mi">10</span><span class="o">*</span><span class="p">(</span><span class="n">V_max</span><span class="o">-</span><span class="n">datos</span><span class="o">.</span><span class="n">volumen_Mm3</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">V_max</span><span class="o">-</span><span class="n">V_min</span><span class="p">)</span>
 <span class="n">z_5_15</span> <span class="o">=</span> <span class="p">(</span><span class="n">distancia_5_15</span><span class="o">-</span><span class="n">distancia_5_15</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">/</span><span class="n">distancia_5_15</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">z_5_15</span><span class="p">,</span> <span class="n">Z</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
 <span class="n">distancia_alternativa</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">+</span> <span class="mi">90</span><span class="o">*</span><span class="p">(</span><span class="n">V_max</span><span class="o">-</span><span class="n">datos</span><span class="o">.</span><span class="n">volumen_Mm3</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">V_max</span><span class="o">-</span><span class="n">V_min</span><span class="p">)</span>
@@ -14826,11 +15125,13 @@ A = +0.111259·z(radiacion_MJ_m2_dia) -0.301152·z(temperatura_media_C) -0.29330
 </div>
 <div class="cell border-box-sizing code_cell rendered" id="cell-id=51ead719">
 <div class="input">
-<div class="prompt input_prompt">In [12]:</div>
+<div class="prompt input_prompt">In [13]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">resultado</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"tipo"</span><span class="p">:</span> <span class="s2">"ACP descriptivo conjunto con distancia simulada"</span><span class="p">,</span>
+    <span class="s2">"definicion_porcentajes"</span><span class="p">:</span><span class="s2">"L1: magnitudes absolutas de coeficientes PC1 agrupadas; conserva signos en la fórmula"</span><span class="p">,</span>
+    <span class="s2">"alcance"</span><span class="p">:</span><span class="s2">"reproduccion descriptiva del escenario; no calibracion de alarma"</span><span class="p">,</span>
     <span class="s2">"embalse"</span><span class="p">:</span> <span class="s2">"Neusa"</span><span class="p">,</span> <span class="s2">"inicio"</span><span class="p">:</span> <span class="s2">"2024-08-01"</span><span class="p">,</span> <span class="s2">"fin"</span><span class="p">:</span> <span class="s2">"2024-08-31"</span><span class="p">,</span> <span class="s2">"observaciones"</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">),</span>
     <span class="s2">"simulacion"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"formula"</span><span class="p">:</span><span class="s2">"5 + 15*(V_max-V)/(V_max-V_min)"</span><span class="p">,</span>
                     <span class="s2">"V_min_Mm3"</span><span class="p">:</span><span class="n">V_min</span><span class="p">,</span><span class="s2">"V_max_Mm3"</span><span class="p">:</span><span class="n">V_max</span><span class="p">,</span><span class="s2">"distancia_min_cm"</span><span class="p">:</span><span class="n">D_min</span><span class="p">,</span><span class="s2">"distancia_max_cm"</span><span class="p">:</span><span class="n">D_max</span><span class="p">,</span>
@@ -14849,7 +15150,7 @@ A = +0.111259·z(radiacion_MJ_m2_dia) -0.301152·z(temperatura_media_C) -0.29330
     <span class="s2">"umbral_alarma_validado"</span><span class="p">:</span><span class="kc">None</span><span class="p">,</span><span class="s2">"ponderaciones_de_riesgo_validadas"</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span>
     <span class="s2">"distancia_medida_por_sensor"</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span><span class="s2">"versiones"</span><span class="p">:</span><span class="n">versiones</span><span class="p">,</span>
 <span class="p">}</span>
-<span class="p">(</span><span class="n">RESULTADOS</span> <span class="o">/</span> <span class="s2">"parametros_indice_descriptivo.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">resultado</span><span class="p">,</span><span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+<span class="p">(</span><span class="n">RESULTADOS</span> <span class="o">/</span> <span class="s2">"parametros_indice_descriptivo.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">resultado</span><span class="p">,</span><span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">allow_nan</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
 <span class="n">display</span><span class="p">(</span><span class="n">reparto</span><span class="p">)</span>
 <span class="n">display</span><span class="p">(</span><span class="n">Markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">"**Conclusión:** con 31 observaciones conjuntas, PC1 explica "</span>
                  <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">varianza</span><span class="o">.</span><span class="n">varianza_pct</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> % de la variación. Su descomposición L1 es "</span>
@@ -14919,6 +15220,111 @@ A = +0.111259·z(radiacion_MJ_m2_dia) -0.301152·z(temperatura_media_C) -0.29330
 </div>
 </div>
 </div>
+<div class="cell border-box-sizing text_cell rendered" id="cell-id=850d7407"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="12.-Verificaci%C3%B3n-independiente-de-la-exportaci%C3%B3n-y-definici%C3%B3n-final">12. Verificación independiente de la exportación y definición final<a class="anchor-link" href="#12.-Verificaci%C3%B3n-independiente-de-la-exportaci%C3%B3n-y-definici%C3%B3n-final">¶</a></h2><p>Leemos nuevamente el JSON de parámetros y el CSV de la matriz final para reconstruir las puntuaciones sin usar el objeto PCA ajustado ni sus variables en memoria. La comparación verifica que los archivos exportados contienen todos los parámetros necesarios.</p>
+<p>La tabla distingue el reparto L1 elegido para escribir la fórmula en dos bloques de las contribuciones cuadráticas al eje. <strong>No son dos opciones intercambiables para el firmware.</strong> El resultado final del estudio es la fórmula descriptiva con signos, medias y desviaciones; un umbral operativo de alarma no ha sido estimado.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered" id="cell-id=6bc8b65b">
+<div class="input">
+<div class="prompt input_prompt">In [14]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">parametros_leidos</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">((</span><span class="n">BASE</span> <span class="o">/</span> <span class="s2">"resultados/parametros_indice_descriptivo.json"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
+<span class="n">matriz_leida</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">BASE</span> <span class="o">/</span> <span class="s2">"resultados/datos_neusa_con_distancia_simulada.csv"</span><span class="p">,</span><span class="n">index_col</span><span class="o">=</span><span class="s2">"fecha"</span><span class="p">,</span><span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">serie_leida</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">BASE</span> <span class="o">/</span> <span class="s2">"resultados/serie_indice_descriptivo.csv"</span><span class="p">,</span><span class="n">index_col</span><span class="o">=</span><span class="s2">"fecha"</span><span class="p">,</span><span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">columnas</span> <span class="o">=</span> <span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"variables_en_orden"</span><span class="p">]</span>
+<span class="n">z_leido</span> <span class="o">=</span> <span class="p">(</span><span class="n">matriz_leida</span><span class="p">[</span><span class="n">columnas</span><span class="p">]</span><span class="o">-</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"medias"</span><span class="p">]))</span><span class="o">/</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"desviaciones_ddof0"</span><span class="p">])</span>
+<span class="n">z_leido</span> <span class="o">=</span> <span class="n">z_leido</span><span class="o">-</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"centrado_adicional_pca"</span><span class="p">])</span>
+<span class="n">pc1_leido</span> <span class="o">=</span> <span class="n">z_leido</span> <span class="o">@</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"coeficientes_PC1"</span><span class="p">])</span>
+<span class="n">ambiente_leido</span> <span class="o">=</span> <span class="n">z_leido</span><span class="p">[</span><span class="n">columnas</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]</span> <span class="o">@</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"coeficientes_bloque_A"</span><span class="p">])</span>
+<span class="n">s_leido</span> <span class="o">=</span> <span class="p">(</span><span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"participacion_nivel_L1"</span><span class="p">]</span><span class="o">*</span><span class="n">z_leido</span><span class="p">[</span><span class="n">columnas</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span>
+           <span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"participacion_ambiente_L1"</span><span class="p">]</span><span class="o">*</span><span class="n">ambiente_leido</span><span class="p">)</span>
+<span class="n">indice_leido</span> <span class="o">=</span> <span class="mi">100</span><span class="o">*</span><span class="p">(</span><span class="n">s_leido</span><span class="o">-</span><span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"S_min_referencia"</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"S_max_referencia"</span><span class="p">]</span><span class="o">-</span><span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"S_min_referencia"</span><span class="p">])</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_index_equal</span><span class="p">(</span><span class="n">matriz_leida</span><span class="o">.</span><span class="n">index</span><span class="p">,</span><span class="n">serie_leida</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">pc1_leido</span><span class="p">,</span><span class="n">serie_leida</span><span class="o">.</span><span class="n">PC1</span><span class="p">,</span><span class="n">atol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">s_leido</span><span class="p">,</span><span class="n">serie_leida</span><span class="o">.</span><span class="n">S</span><span class="p">,</span><span class="n">atol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">indice_leido</span><span class="p">,</span><span class="n">serie_leida</span><span class="o">.</span><span class="n">indice_descriptivo_pct</span><span class="p">,</span><span class="n">atol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
+<span class="n">coef_leidos</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"coeficientes_PC1"</span><span class="p">])</span>
+<span class="n">resumen_porcentajes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
+    <span class="p">{</span><span class="s2">"estadistico"</span><span class="p">:</span><span class="s2">"Reparto L1 de coeficientes PC1"</span><span class="p">,</span><span class="s2">"nivel_pct"</span><span class="p">:</span><span class="mi">100</span><span class="o">*</span><span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"participacion_nivel_L1"</span><span class="p">],</span>
+     <span class="s2">"ambiente_pct"</span><span class="p">:</span><span class="mi">100</span><span class="o">*</span><span class="n">parametros_leidos</span><span class="p">[</span><span class="s2">"participacion_ambiente_L1"</span><span class="p">],</span>
+     <span class="s2">"uso"</span><span class="p">:</span><span class="s2">"expresar S = X*z_distancia + Y*A conservando signos"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"estadistico"</span><span class="p">:</span><span class="s2">"Contribuciones cuadráticas a PC1"</span><span class="p">,</span><span class="s2">"nivel_pct"</span><span class="p">:</span><span class="mi">100</span><span class="o">*</span><span class="n">coef_leidos</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">columnas</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span>
+     <span class="s2">"ambiente_pct"</span><span class="p">:</span><span class="mi">100</span><span class="o">*</span><span class="n">coef_leidos</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">columnas</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
+     <span class="s2">"uso"</span><span class="p">:</span><span class="s2">"describir participación en el eje; no sustituye la fórmula L1"</span><span class="p">},</span>
+<span class="p">])</span>
+<span class="n">resumen_porcentajes</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">RESULTADOS</span> <span class="o">/</span> <span class="s2">"definicion_porcentajes.csv"</span><span class="p">,</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">resumen_porcentajes</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Error máximo de reconstrucción del índice:"</span><span class="p">,</span><span class="nb">float</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">indice_leido</span><span class="o">-</span><span class="n">serie_leida</span><span class="o">.</span><span class="n">indice_descriptivo_pct</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validación computacional del índice descriptivo: correcta."</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Validación de ponderaciones y umbral de alarma real: no estimada con estos datos."</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_html rendered_html output_subarea"><div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>estadistico</th>
+<th>nivel_pct</th>
+<th>ambiente_pct</th>
+<th>uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>Reparto L1 de coeficientes PC1</td>
+<td>17.337104</td>
+<td>82.662896</td>
+<td>expresar S = X*z_distancia + Y*A conservando signos</td>
+</tr>
+<tr>
+<th>1</th>
+<td>Contribuciones cuadráticas a PC1</td>
+<td>13.759515</td>
+<td>86.240485</td>
+<td>describir participación en el eje; no sustituye la fórmula L1</td>
+</tr>
+</tbody>
+</table>
+</div></div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Error máximo de reconstrucción del índice: 1.4210854715202004e-14
+Validación computacional del índice descriptivo: correcta.
+Validación de ponderaciones y umbral de alarma real: no estimada con estos datos.
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div class="cell border-box-sizing text_cell rendered" id="cell-id=a314dd2a"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
@@ -14931,6 +15337,7 @@ A = +0.111259·z(radiacion_MJ_m2_dia) -0.301152·z(temperatura_media_C) -0.29330
 <p>[7] Vaisala, <em>RWS200 Installation Manual</em>, “Installing SR50A”, revisión AA. <a href="https://docs.vaisala.com/r/M211608EN-AA/en-US/GUID-903A8C27-3DC8-45CB-92F9-AAF8B8783692?contentId=mRvlHRVufJ2WXQGl8XlDEw">https://docs.vaisala.com/r/M211608EN-AA/en-US/GUID-903A8C27-3DC8-45CB-92F9-AAF8B8783692?contentId=mRvlHRVufJ2WXQGl8XlDEw</a>.</p>
 <p>[8] SparkFun Electronics, “Ultrasonic Distance Sensor – 5V (HC-SR04)”, SEN-15569, especificaciones. <a href="https://www.sparkfun.com/ultrasonic-distance-sensor-hc-sr04.html">https://www.sparkfun.com/ultrasonic-distance-sensor-hc-sr04.html</a>.</p>
 <p>[9] State Water Resources Control Board, <em>Reservoir Storage Measurement &amp; Recordkeeping Guide for Above-Ground Reservoirs</em>, versión 03/01/2020, pp. 3, 5 y 7. <a href="https://www.waterboards.ca.gov/waterrights/water_issues/programs/diversion_use/docs/res_measure6.pdf">https://www.waterboards.ca.gov/waterrights/water_issues/programs/diversion_use/docs/res_measure6.pdf</a>.</p>
+<p>[10] A. González Mancera, Universidad de los Andes – Consejo Nacional de Operación, <em>Medición de variables hídricas asociadas a plantas de generación hidroeléctricas</em>, octubre de 2020, secciones 2.6, 4.1.6 y 4.3.6. <a href="https://stage.cno.org.co/system/files/archivosAdjuntos/2020-medicion-de-variables-hidricas-final.pdf">https://stage.cno.org.co/system/files/archivosAdjuntos/2020-medicion-de-variables-hidricas-final.pdf</a>.</p>
 </div>
 </div>
 </div>

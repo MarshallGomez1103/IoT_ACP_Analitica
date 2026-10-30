@@ -12,6 +12,8 @@ La [guía de medición de almacenamiento del State Water Resources Control Board
 
 La revisión metodológica distingue tres cuestiones: la justificación del montaje, la correspondencia nivel–volumen y la validación del evento de alarma. Cambiar el intervalo simulado a 5–15 cm no resuelve esas cuestiones ni modifica el z-score de la variable hídrica. El notebook incluye una comprobación explícita de esa equivalencia.
 
+Como referencia operativa colombiana, el [estudio de la Universidad de los Andes para el Consejo Nacional de Operación](https://stage.cno.org.co/system/files/archivosAdjuntos/2020-medicion-de-variables-hidricas-final.pdf), secciones 2.6, 4.1.6 y 4.3.6, documenta la obtención de tablas nivel–volumen mediante batimetría. Describe prácticas de operadores hidroeléctricos; no identifica por sí solo el equipo ni la curva utilizados por CAR en los boletines del Neusa.
+
 ## Reproducción
 
 Con Python 3.11, desde esta carpeta:
@@ -41,6 +43,24 @@ La matriz conjunta contiene las 31 fechas de agosto de 2024 con datos de ambas f
 La carpeta `resultados/` contiene las tablas reconstruidas, la distancia simulada, medias y desviaciones, correlaciones, coeficientes, cargas, varianza explicada, reparto L1, sensibilidad temporal y figuras. `parametros_indice_descriptivo.json` reúne los parámetros necesarios para reproducir las puntuaciones.
 
 `01_Fusion_ACP_volumen_ambiente.html` permite consultar el código, las explicaciones y las salidas sin abrir Jupyter. Para modificar o volver a ejecutar el análisis se utiliza el archivo `.ipynb`.
+
+## Tratamiento de calidad y reproducción del índice
+
+La sección 5.1 muestra los controles de duplicados, faltantes, finitud, calendario y rangos físicos, y registra las observaciones extremas mediante IQR. Las banderas estadísticas no se interpretan automáticamente como errores: se conservan los valores originales admisibles. No se imputan, interpolan ni eliminan observaciones para favorecer el resultado del ACP.
+
+Los porcentajes CAR se contrastan con intervalos derivados de sus decimales publicados. El porcentaje y la capacidad de regulación originales se conservan cuando son compatibles con esa precisión; no se sobrescriben por pequeñas diferencias de redondeo.
+
+La sección 12 vuelve a leer el JSON de parámetros y la matriz exportada para reconstruir PC1, S y el índice final sin utilizar el modelo ajustado en memoria. La tabla final separa la normalización L1 elegida para la expresión de dos bloques de las contribuciones cuadráticas al eje. Cada estadístico conserva su definición y su uso.
+
+Los archivos adicionales de comprobación son:
+
+| Archivo en `resultados/` | Contenido |
+|---|---|
+| `control_redondeo_CAR.csv` | Compatibilidad de los porcentajes y la capacidad de regulación con la precisión publicada. |
+| `trazabilidad_muestra.csv` | Paso de las fuentes completas a las 31 fechas de la matriz final. |
+| `calidad_variables.csv` | Faltantes, extremos y límites IQR por variable del ACP. |
+| `observaciones_IQR.csv` | Valores señalados y tratamiento aplicado. |
+| `definicion_porcentajes.csv` | Definición, valor y uso de cada reparto presentado. |
 
 ## Interpretación
 

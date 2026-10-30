@@ -1,5 +1,7 @@
 {
   "tipo": "ACP descriptivo conjunto con distancia simulada",
+  "definicion_porcentajes": "L1: magnitudes absolutas de coeficientes PC1 agrupadas; conserva signos en la fórmula",
+  "alcance": "reproduccion descriptiva del escenario; no calibracion de alarma",
   "embalse": "Neusa",
   "inicio": "2024-08-01",
   "fin": "2024-08-31",

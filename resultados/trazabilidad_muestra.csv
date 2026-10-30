@@ -1,0 +1,6 @@
+etapa,filas,criterio
+NASA original,1096,serie completa 2023–2025
+CAR original,124,31 fechas y cuatro embalses
+CAR Neusa,31,mismo embalse del punto NASA
+Unión por fecha,31,sin imputar volumen para otras fechas
+Matriz final ACP,31,"todas las 31 fechas, sin eliminar extremos"
